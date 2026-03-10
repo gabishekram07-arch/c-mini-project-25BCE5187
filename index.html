@@ -179,11 +179,6 @@ canvas.emscripten { border: 0px none; background-color: black; }
             outputElement.scrollTop = outputElement.scrollHeight; // focus on bottom
           }
         },
-        stdin: function() {
-          // This prevents the pop-up. 
-          // Returning null tells the C++ code there is no more input (EOF).
-          return null; 
-        },
         canvas: canvasElement,
         setStatus: setStatus,
         totalDependencies: 0,
