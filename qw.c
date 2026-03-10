@@ -38,26 +38,27 @@ int main() {
     int choice;
 
     while (1) {
-        // Pause to let the browser process the JavaScript input queue
-        emscripten_sleep(100); 
+        // NEW: Wait here silently until the user actually types something
+        // This prevents the menu from printing over and over again.
+        int c = peek_stdin(); // We need a way to check if data exists
+        if (c == EOF) {
+            emscripten_sleep(100); 
+            continue; 
+        }
 
         printf("\n--- MOVIE TICKET SYSTEM ---\n");
-        printf("1. View Shows & Seats\n");
-        printf("2. Book Tickets\n");
-        printf("3. View Booking by ID\n");
-        printf("4. Occupancy Report\n");
-        printf("5. Exit\n");
+        printf("1. View Shows & Seats\n2. Book Tickets\n3. View Booking\n4. Report\n5. Exit\n");
         printf("Enter choice: ");
         fflush(stdout); 
         
-        // If scanf fails, it means the input queue is currently empty
         if (scanf("%d", &choice) != 1) {
             clearerr(stdin); 
             while(getchar() != '\n' && getchar() != EOF); 
-            // Wait 1 second before showing the menu again to prevent "spam"
-            emscripten_sleep(1000); 
+            emscripten_sleep(100);
             continue;
         }
+        // ... switch(choice) ...
+    }
 
         switch (choice) {
             case 1:
