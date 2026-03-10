@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineBook — Movie Ticket System (WASM)</title>
+  <style>
+    :root {
+      --bg: #0c0c0e; --surface: #16161a; --card: #1e1e24;
+      --border: #2e2e38; --red: #e8281e; --gold: #f5c842;
+      --green: #2dcc70; --text: #f0f0f0; --muted: #888;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh; padding: 24px 16px;
+    }
+    header {
+      width: 100%; max-width: 780px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { font-size: 1.8rem; font-weight: 900; letter-spacing: 3px; color: var(--red); }
+    .logo span { color: var(--gold); }
+    .badge {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 12px;
+      font-size: 0.72rem; color: var(--muted); letter-spacing: 1px;
+    }
+    .badge .dot {
+      display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green); margin-right: 6px;
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    #terminal {
+      width: 100%; max-width: 780px; height: 460px;
+      background: #000; border: 1px solid var(--border);
+      border-radius: 12px 12px 0 0; padding: 16px;
+      font-family: 'Courier New', monospace; font-size: 0.88rem;
+      color: #33ff33; overflow-y: auto; line-height: 1.55;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .input-row {
+      width: 100%; max-width: 780px;
+      display: flex; background: var(--card);
+      border: 1px solid var(--border); border-top: none;
+      border-radius: 0 0 12px 12px; overflow: hidden;
+    }
+    .prompt-label {
+      display: flex; align-items: center; padding: 0 14px;
+      font-family: monospace; font-size: 0.9rem; color: var(--gold);
+      border-right: 1px solid var(--border); user-select: none;
+    }
+    #userInput {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-family: 'Courier New', monospace;
+      font-size: 0.9rem; padding: 14px 16px;
+    }
+    #userInput::placeholder { color: var(--muted); }
+    #sendBtn {
+      background: var(--red); border: none; color: #fff;
+      font-size: 0.85rem; font-weight: 700; letter-spacing: 1px;
+      padding: 0 22px; cursor: pointer; transition: background 0.2s;
+    }
+    #sendBtn:hover { background: #c4211a; }
+
+    .hints {
+      width: 100%; max-width: 780px; margin-top: 16px;
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .hint-label {
+      font-size: 0.72rem; color: var(--muted); letter-spacing: 1px;
+      text-transform: uppercase; align-self: center; margin-right: 4px;
+    }
+    .chip {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 5px 14px; font-size: 0.78rem;
+      color: var(--text); cursor: pointer; transition: all 0.15s;
+      font-family: 'Courier New', monospace;
+    }
+    .chip:hover { border-color: var(--gold); color: var(--gold); }
+
+    .help-card {
+      width: 100%; max-width: 780px; margin-top: 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 20px;
+      font-size: 0.82rem; color: var(--muted); line-height: 1.7;
+    }
+    .help-card b { color: var(--gold); }
+    .help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; margin-top: 10px; }
+    .help-row { display: flex; gap: 10px; align-items: center; }
+    .help-key {
+      font-family: 'Courier New', monospace; background: var(--card);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 1px 8px; color: var(--green); white-space: nowrap;
+    }
+    canvas { display: none; }
+    @media (max-width: 480px) {
+      .help-grid { grid-template-columns: 1fr; }
+      #terminal { height: 320px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Cine<span>Book</span></div>
+  <div class="badge"><span class="dot"></span>WebAssembly · C → WASM</div>
+</header>
+
+<div id="terminal"></div>
+
+<div class="input-row">
+  <div class="prompt-label">$&gt;</div>
+  <input id="userInput" type="text" placeholder="Type your input and press Enter…" autocomplete="off" autofocus>
+  <button id="sendBtn" onclick="sendInput()">SEND</button>
+</div>
+
+<div class="hints">
+  <span class="hint-label">Quick:</span>
+  <span class="chip" onclick="quickSend('1')">1 · View Shows</span>
+  <span class="chip" onclick="quickSend('2')">2 · Book Tickets</span>
+  <span class="chip" onclick="quickSend('3')">3 · View Booking</span>
+  <span class="chip" onclick="quickSend('4')">4 · Report</span>
+  <span class="chip" onclick="quickSend('5')">5 · Exit</span>
+</div>
+
+<div class="help-card">
+  <b>How to use</b>
+  <div class="help-grid">
+    <div class="help-row"><span class="help-key">1 → Enter</span><span>View seat map</span></div>
+    <div class="help-row"><span class="help-key">2 → Enter</span><span>Start booking flow</span></div>
+    <div class="help-row"><span class="help-key">A3</span><span>Seat format (row A, col 3)</span></div>
+    <div class="help-row"><span class="help-key">3 → 1001</span><span>Look up booking ID</span></div>
+  </div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+  const terminal = document.getElementById('terminal');
+
+  function appendText(text) {
+    // Colour-code key parts
+    const coloured = text
+      .replace(/(\$[\d.]+)/g,   '<span style="color:#f5c842">$1</span>')
+      .replace(/(CONFIRMED!)/g, '<span style="color:#2dcc70;font-weight:bold">$1</span>')
+      .replace(/\b(X)\b/g,      '<span style="color:#e8281e">X</span>');
+    terminal.innerHTML += coloured + '\n';
+    terminal.scrollTop = terminal.scrollHeight;
+  }
+
+  function sendInput() {
+    const inp = document.getElementById('userInput');
+    const val = inp.value.trim();
+    if (!val) return;
+    inp.value = '';
+
+    // ── KEY CHANGE ──────────────────────────────────────────────────────────
+    // We call the exported C function handle_input() directly.
+    // No scanf() is used. The browser never has to "block" for input.
+    // ────────────────────────────────────────────────────────────────────────
+    if (typeof Module !== 'undefined' && Module._handle_input) {
+      const len  = Module.lengthBytesUTF8(val) + 1;
+      const ptr  = Module._malloc(len);
+      Module.stringToUTF8(val, ptr, len);
+      Module._handle_input(ptr);
+      Module._free(ptr);
+    } else {
+      appendText('<span style="color:#e8281e">⚠ WASM module not ready yet…</span>');
+    }
+  }
+
+  function quickSend(val) {
+    document.getElementById('userInput').value = val;
+    sendInput();
+  }
+
+  document.getElementById('userInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendInput();
+  });
+
+  // Emscripten module configuration
+  var Module = {
+    print: function(text) { appendText(text); },
+    printErr: function(text) {
+      appendText('<span style="color:#e8281e">' + text + '</span>');
+    },
+    canvas: document.getElementById('canvas'),
+    onRuntimeInitialized: function() {
+      appendText('<span style="color:#2dcc70">✓ WebAssembly loaded successfully!</span>');
+    }
+  };
+</script>
+
+<!-- Compiled by: emcc qw.c -o index.js -s EXPORTED_FUNCTIONS="['_main','_handle_input','_malloc','_free']" -s EXPORTED_RUNTIME_METHODS="['allocateUTF8','lengthBytesUTF8','stringToUTF8']" -s NO_EXIT_RUNTIME=1 -s ALLOW_MEMORY_GROWTH=1 -->
+<script async src="index.js"></script>
+
+</body>
+</html>
