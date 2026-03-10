@@ -61,7 +61,8 @@
                 if (inputQueue.length > 0) {
                     return inputQueue.shift();
                 }
-                return null; // Signals "No Input" to C
+                return -1;
+               // Signals "No Input" to C
             },
             canvas: document.getElementById('canvas')
         };
