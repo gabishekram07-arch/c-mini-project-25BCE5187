@@ -179,6 +179,9 @@ canvas.emscripten { border: 0px none; background-color: black; }
             outputElement.scrollTop = outputElement.scrollHeight; // focus on bottom
           }
         },
+        stdin: function() {
+          return null; // Prevents the pop-up prompt
+        },
         canvas: canvasElement,
         setStatus: setStatus,
         totalDependencies: 0,
