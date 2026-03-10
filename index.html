@@ -33,7 +33,6 @@
         var inputQueue = [];
 
         function sendCommand() {
-            console.log("Button clicked!");
             var inputField = document.getElementById('userInput');
             if (!inputField.value) return;
             
@@ -64,7 +63,7 @@
                 if (inputQueue.length > 0) {
                     return inputQueue.shift(); // Pull the first character out of the waiting room
                 }
-                return null; // Tell C the room is empty so it sleeps
+                return undefined; // Tell C the room is empty so it sleeps
             },
             canvas: document.getElementById('canvas')
         };
