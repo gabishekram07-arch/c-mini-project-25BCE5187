@@ -4,22 +4,28 @@
     <meta charset="utf-8">
     <title>Movie Ticket System</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #222; color: white; }
-        #output { width: 80%; height: 300px; background: black; color: #0f0; font-family: monospace; margin-top: 10px; }
-        .controls { margin: 20px; }
-        input { padding: 8px; width: 200px; }
-        button { padding: 8px 16px; cursor: pointer; }
-        canvas { display: none; } /* Hide the canvas since we only need text */
+        body { font-family: sans-serif; text-align: center; background: #1a1a1a; color: #eee; margin: 0; padding: 20px; }
+        #output { 
+            width: 90%; height: 400px; background: #000; color: #33ff33; 
+            font-family: 'Courier New', monospace; padding: 10px; border: 2px solid #444;
+            margin-top: 15px; resize: none;
+        }
+        .input-area { background: #333; padding: 15px; border-radius: 8px; display: inline-block; }
+        input { padding: 10px; width: 250px; border: none; border-radius: 4px; }
+        button { padding: 10px 20px; background: #eb3b5a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #fc5c65; }
+        canvas { display: none; }
     </style>
 </head>
 <body>
-    <h1>Movie Ticket System</h1>
+    <h1>🎬 Movie Ticket System</h1>
     
-    <div class="controls">
-        <input type="text" id="userInput" placeholder="Type choice (e.g., 1) and press Enter">
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Type choice and press Enter...">
         <button onclick="sendCommand()">Send</button>
     </div>
 
+    <br>
     <textarea id="output" readonly></textarea>
     <canvas id="canvas"></canvas>
 
@@ -28,6 +34,8 @@
 
         function sendCommand() {
             var inputField = document.getElementById('userInput');
+            if (!inputField.value) return;
+            
             var val = inputField.value + "\n"; 
             for (var i = 0; i < val.length; i++) {
                 inputQueue.push(val.charCodeAt(i));
@@ -35,7 +43,7 @@
             inputField.value = ""; 
         }
 
-        // Allow pressing "Enter" key to send
+        // Shortcut: Pressing Enter sends the command
         document.getElementById('userInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') sendCommand();
         });
@@ -52,7 +60,7 @@
                 if (inputQueue.length > 0) {
                     return inputQueue.shift();
                 }
-                return null; 
+                return null; // C interprets this as EOF/No Input
             },
             canvas: document.getElementById('canvas')
         };
