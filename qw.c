@@ -52,7 +52,8 @@ int main() {
         
         if (scanf("%d", &choice) != 1) {
             printf("Invalid input. Restarting...\n");
-            while(getchar() != '\n'); // Clear buffer
+            while(getchar() != '\n' && getchar() != EOF); // Clear buffer
+            emscripten_sleep(100);
             continue;
         }
 
