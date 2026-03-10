@@ -180,9 +180,7 @@ canvas.emscripten { border: 0px none; background-color: black; }
           }
         },
         stdin: function() {
-          // This prevents the pop-up. 
-          // Returning null tells the C++ code there is no more input (EOF).
-          return null; 
+          return null; // Prevents the pop-up prompt
         },
         canvas: canvasElement,
         setStatus: setStatus,

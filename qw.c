@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <emscripten.h>
 
 #define ROWS 5
 #define COLS 10
@@ -40,6 +41,7 @@ int main() {
     int choice;
 
     while (1) {
+        emscripten_sleep(1);
         printf("\n--- MOVIE TICKET SYSTEM ---\n");
         printf("1. View Shows & Seats\n");
         printf("2. Book Tickets\n");
