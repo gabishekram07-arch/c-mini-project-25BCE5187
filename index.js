@@ -5307,9 +5307,9 @@ function checkIncomingModuleAPI() {
 }
 
 // Imports from the Wasm binary.
+var _fflush = makeInvalidEarlyAccess('_fflush');
 var _main = Module['_main'] = makeInvalidEarlyAccess('_main');
 var ___funcs_on_exit = makeInvalidEarlyAccess('___funcs_on_exit');
-var _fflush = makeInvalidEarlyAccess('_fflush');
 var _free = makeInvalidEarlyAccess('_free');
 var _malloc = makeInvalidEarlyAccess('_malloc');
 var _emscripten_stack_get_end = makeInvalidEarlyAccess('_emscripten_stack_get_end');
@@ -5334,9 +5334,9 @@ var __indirect_function_table = makeInvalidEarlyAccess('__indirect_function_tabl
 var wasmMemory = makeInvalidEarlyAccess('wasmMemory');
 
 function assignWasmExports(wasmExports) {
+  assert(typeof wasmExports['fflush'] != 'undefined', 'missing Wasm export: fflush');
   assert(typeof wasmExports['main'] != 'undefined', 'missing Wasm export: main');
   assert(typeof wasmExports['__funcs_on_exit'] != 'undefined', 'missing Wasm export: __funcs_on_exit');
-  assert(typeof wasmExports['fflush'] != 'undefined', 'missing Wasm export: fflush');
   assert(typeof wasmExports['free'] != 'undefined', 'missing Wasm export: free');
   assert(typeof wasmExports['malloc'] != 'undefined', 'missing Wasm export: malloc');
   assert(typeof wasmExports['emscripten_stack_get_end'] != 'undefined', 'missing Wasm export: emscripten_stack_get_end');
@@ -5358,9 +5358,9 @@ function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['asyncify_stop_rewind'] != 'undefined', 'missing Wasm export: asyncify_stop_rewind');
   assert(typeof wasmExports['memory'] != 'undefined', 'missing Wasm export: memory');
   assert(typeof wasmExports['__indirect_function_table'] != 'undefined', 'missing Wasm export: __indirect_function_table');
+  _fflush = createExportWrapper('fflush', 1);
   _main = Module['_main'] = createExportWrapper('main', 2);
   ___funcs_on_exit = createExportWrapper('__funcs_on_exit', 0);
-  _fflush = createExportWrapper('fflush', 1);
   _free = createExportWrapper('free', 1);
   _malloc = createExportWrapper('malloc', 1);
   _emscripten_stack_get_end = wasmExports['emscripten_stack_get_end'];

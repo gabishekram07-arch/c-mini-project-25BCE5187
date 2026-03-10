@@ -36,45 +36,52 @@ void showOccupancyReport();
 void saveToFile();
 void loadFromFile();
 
-// Helper function to handle input waiting
-void wait_for_input() {
+// Helper to handle input cleanup without spamming output
+void silent_input_wait() {
     clearerr(stdin);
     while(getchar() != '\n' && getchar() != EOF); 
-    emscripten_sleep(500); // Wait half a second before allowing the loop to continue
+    emscripten_sleep(200); 
 }
 
 int main() {
     loadFromFile(); 
     int choice;
+    int show_menu = 1; // Flag to stop infinite menu printing
 
     while (1) {
         // Essential: lets the browser process the UI/Input queue
         emscripten_sleep(100); 
 
-        printf("\n--- MOVIE TICKET SYSTEM ---\n");
-        printf("1. View Shows & Seats\n");
-        printf("2. Book Tickets\n");
-        printf("3. View Booking by ID\n");
-        printf("4. Occupancy Report\n");
-        printf("5. Exit\n");
-        printf("Enter choice: ");
-        fflush(stdout); 
-        
-        // If scanf fails, it means no text has been sent from the HTML box yet
-        if (scanf("%d", &choice) != 1) {
-            wait_for_input(); 
-            continue; // Restarts the loop silently
+        if (show_menu) {
+            printf("\n--- MOVIE TICKET SYSTEM ---\n");
+            printf("1. View Shows & Seats\n");
+            printf("2. Book Tickets\n");
+            printf("3. View Booking by ID\n");
+            printf("4. Occupancy Report\n");
+            printf("5. Exit\n");
+            printf("Enter choice: ");
+            fflush(stdout); 
+            show_menu = 0; // Turn off menu until a command is finished
         }
+        
+        // Attempt to read choice from the HTML input queue
+        if (scanf("%d", &choice) != 1) {
+            silent_input_wait(); 
+            continue; // Keep looping silently
+        }
+
+        // Choice received, prepare to show menu again after execution
+        show_menu = 1; 
 
         switch (choice) {
             case 1:
                 for(int i=0; i<MAX_SHOWS; i++) {
                     printf("\nShow [%d]: %s", i+1, shows[i].title);
                 }
-                printf("\nEnter Show Number (1-%d): ", MAX_SHOWS);
+                printf("\nEnter Show Number (1-3): ");
                 fflush(stdout);
                 int sIdx; 
-                while(scanf("%d", &sIdx) != 1) { wait_for_input(); }
+                while(scanf("%d", &sIdx) != 1) { silent_input_wait(); }
                 if(sIdx >= 1 && sIdx <= MAX_SHOWS) displaySeats(sIdx-1);
                 else printf("Invalid Show.\n");
                 break;
@@ -88,6 +95,7 @@ int main() {
     return 0;
 }
 
+// 1. Function to display the 5x10 seat grid
 void displaySeats(int showIdx) {
     printf("\n--- Seat Layout for %s ---\n", shows[showIdx].title);
     printf("    ");
@@ -106,11 +114,12 @@ void displaySeats(int showIdx) {
     fflush(stdout);
 }
 
+// 2. Function to handle booking logic
 void bookTicket() {
     int sIdx, n;
-    printf("\nSelect Show (1-%d): ", MAX_SHOWS);
+    printf("\nSelect Show (1-3): ");
     fflush(stdout);
-    while(scanf("%d", &sIdx) != 1) { wait_for_input(); }
+    while(scanf("%d", &sIdx) != 1) { silent_input_wait(); }
     sIdx--; 
 
     if(sIdx < 0 || sIdx >= MAX_SHOWS) {
@@ -119,15 +128,15 @@ void bookTicket() {
     }
 
     displaySeats(sIdx);
-    printf("Enter number of seats: ");
+    printf("Enter number of seats to book: ");
     fflush(stdout);
-    while(scanf("%d", &n) != 1) { wait_for_input(); }
+    while(scanf("%d", &n) != 1) { silent_input_wait(); }
 
     Booking b;
     b.bookingID = rand() % 9000 + 1000;
     printf("Enter Customer Name (no spaces): ");
     fflush(stdout);
-    while(scanf("%s", b.customerName) != 1) { wait_for_input(); }
+    while(scanf("%s", b.customerName) != 1) { silent_input_wait(); }
     
     b.showIndex = sIdx;
     b.numSeats = n;
@@ -138,17 +147,17 @@ void bookTicket() {
         char r; int c;
         printf("Enter seat %d (e.g., A 5): ", k+1);
         fflush(stdout);
-        while(scanf(" %c %d", &r, &c) != 2) { wait_for_input(); }
+        while(scanf(" %c %d", &r, &c) != 2) { silent_input_wait(); }
         
         int row = r - 'A';
         int col = c - 1;
 
         if(row < 0 || row >= ROWS || col < 0 || col >= COLS) {
-            printf("Invalid seat!\n");
+            printf("Invalid seat! Try again.\n");
             k--; continue;
         }
         if(shows[sIdx].seats[row][col] == 1) {
-            printf("Seat already booked!\n");
+            printf("Seat already booked! Pick another.\n");
             k--; continue;
         }
 
@@ -169,11 +178,12 @@ void bookTicket() {
     saveToFile(); 
 }
 
+// 3. Function to view booking by ID
 void viewBooking() {
     int id, found = 0;
     printf("Enter Booking ID: ");
     fflush(stdout);
-    while(scanf("%d", &id) != 1) { wait_for_input(); }
+    while(scanf("%d", &id) != 1) { silent_input_wait(); }
 
     FILE *fp = fopen("bookings.bin", "rb");
     if(!fp) { printf("No bookings found.\n"); return; }
@@ -181,16 +191,17 @@ void viewBooking() {
     Booking b;
     while(fread(&b, sizeof(Booking), 1, fp)) {
         if(b.bookingID == id) {
-            printf("\n--- RECEIPT ---\nID: %d\nName: %s\nSeats: %s\n", 
+            printf("\n--- RECEIPT ---\nID: %d | Name: %s | Seats: %s\n", 
                     b.bookingID, b.customerName, b.seatPositions);
             found = 1;
             break;
         }
     }
-    if(!found) printf("ID not found.\n");
+    if(!found) printf("Booking ID not found.\n");
     fclose(fp);
 }
 
+// 4. Occupancy Report Function
 void showOccupancyReport() {
     printf("\n--- OCCUPANCY REPORT ---\n");
     for(int i=0; i<MAX_SHOWS; i++) {
@@ -204,6 +215,7 @@ void showOccupancyReport() {
     }
 }
 
+// 5. File Handling Functions
 void saveToFile() {
     FILE *fp = fopen(DATA_FILE, "wb");
     if(fp) {
