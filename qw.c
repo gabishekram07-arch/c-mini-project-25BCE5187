@@ -8,10 +8,9 @@
 #define MAX_SHOWS 3
 #define DATA_FILE "theater_data.bin"
 
-// Structure Definitions
 typedef struct {
     char title[50];
-    int seats[ROWS][COLS]; // 0 = Available, 1 = Booked
+    int seats[ROWS][COLS]; 
     float price;
 } Show;
 
@@ -24,10 +23,8 @@ typedef struct {
     float totalAmount;
 } Booking;
 
-// Global Array of Shows
 Show shows[MAX_SHOWS];
 
-// Function Prototypes
 void initializeShows();
 void displaySeats(int showIdx);
 void bookTicket();
@@ -37,11 +34,13 @@ void saveToFile();
 void loadFromFile();
 
 int main() {
-    loadFromFile(); // Load existing data if available
+    loadFromFile(); 
     int choice;
 
     while (1) {
-        emscripten_sleep(1);
+        // Pause to let the browser process the JavaScript input queue
+        emscripten_sleep(100); 
+
         printf("\n--- MOVIE TICKET SYSTEM ---\n");
         printf("1. View Shows & Seats\n");
         printf("2. Book Tickets\n");
@@ -49,11 +48,14 @@ int main() {
         printf("4. Occupancy Report\n");
         printf("5. Exit\n");
         printf("Enter choice: ");
+        fflush(stdout); 
         
+        // If scanf fails, it means the input queue is currently empty
         if (scanf("%d", &choice) != 1) {
-            printf("Invalid input. Restarting...\n");
-            while(getchar() != '\n' && getchar() != EOF); // Clear buffer
-            emscripten_sleep(100);
+            clearerr(stdin); 
+            while(getchar() != '\n' && getchar() != EOF); 
+            // Wait 1 second before showing the menu again to prevent "spam"
+            emscripten_sleep(1000); 
             continue;
         }
 
@@ -62,10 +64,12 @@ int main() {
                 for(int i=0; i<MAX_SHOWS; i++) {
                     printf("\nShow [%d]: %s", i+1, shows[i].title);
                 }
-                printf("\nEnter Show Number (1-%d) to view seats: ", MAX_SHOWS);
-                int sIdx; scanf("%d", &sIdx);
-                if(sIdx >= 1 && sIdx <= MAX_SHOWS) displaySeats(sIdx-1);
-                else printf("Invalid Show.\n");
+                printf("\nEnter Show Number: ");
+                int sIdx; 
+                if(scanf("%d", &sIdx) == 1) {
+                    if(sIdx >= 1 && sIdx <= MAX_SHOWS) displaySeats(sIdx-1);
+                    else printf("Invalid Show.\n");
+                }
                 break;
             case 2: bookTicket(); break;
             case 3: viewBooking(); break;
@@ -76,6 +80,7 @@ int main() {
     }
     return 0;
 }
+
 
 // 1. Function to display the 5x10 seat grid
 void displaySeats(int showIdx) {
