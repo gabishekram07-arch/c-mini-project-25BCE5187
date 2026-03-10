@@ -74,47 +74,73 @@ int parseSeat(char *input, int *r, int *c) {
 // ——————————————————————————————————————————————————
 // Main Loop
 // ——————————————————————————————————————————————————
-void main_loop() {
+
+    void main_loop() {
+    // State 0: Display the Main Menu
     if (show_menu) {
         printf("\n--- MOVIE TICKET SYSTEM ---\n");
         printf("1. View Shows & Seats\n2. Book Tickets\n3. View Booking by ID\n4. Occupancy Report\n5. Exit\n");
         printf("Enter choice: ");
         fflush(stdout);
         show_menu = 0;
+        sub_state = 0;
     }
 
-    if (sub_state >= 0 && sub_state <= 3) {
-        int num;
-        if (scanf("%d", &num) == 1) {
-            clear_input_buffer();
-            if (sub_state == 0) {
-                if (num == 1) { printf("Enter Show (1-3): "); sub_state = 1; }
-                else if (num == 2) { printf("Select Show (1-3): "); sub_state = 2; }
-                else if (num == 3) { viewBooking(); show_menu = 1; }
-                else if (num == 4) { showOccupancyReport(); show_menu = 1; }
-                else if (num == 5) { saveToFile(); printf("Data Saved. Goodbye!\n"); emscripten_cancel_main_loop(); }
-                else show_menu = 1;
-            } 
-            else if (sub_state == 1) { 
-                if (num >= 1 && num <= MAX_SHOWS) displaySeats(num - 1);
-                sub_state = 0; show_menu = 1; 
+    int num;
+    // Check if there is integer input available
+    if (scanf("%d", &num) == 1) {
+        clear_input_buffer();
+
+        if (sub_state == 0) {
+            if (num == 1) { 
+                printf("Enter Show Number (1-3): "); 
+                sub_state = 1; 
             }
-            else if (sub_state == 2) {
-                if (num >= 1 && num <= MAX_SHOWS) {
-                    selected_show = num - 1;
-                    displaySeats(selected_show);
-                    printf("How many seats? ");
-                    sub_state = 3;
-                } else { printf("Invalid. Show (1-3): "); }
+            else if (num == 2) { 
+                printf("Select Show (1-3): "); 
+                sub_state = 2; 
             }
-            else if (sub_state == 3) {
-                seats_to_book = num;
-                printf("Enter Customer Name (no spaces): ");
-                sub_state = 4;
-            }
+            else if (num == 3) { viewBooking(); show_menu = 1; }
+            else if (num == 4) { showOccupancyReport(); show_menu = 1; }
+            else if (num == 5) { saveToFile(); emscripten_cancel_main_loop(); }
             fflush(stdout);
         }
-    } 
+        else if (sub_state == 1) {
+            // View Only Mode
+            if (num >= 1 && num <= MAX_SHOWS) displaySeats(num - 1);
+            show_menu = 1; // Return to menu
+            sub_state = 0;
+        }
+        else if (sub_state == 2) {
+            // Booking Mode: Show selection
+            if (num >= 1 && num <= MAX_SHOWS) {
+                selected_show = num - 1;
+                displaySeats(selected_show);
+                // CRITICAL: Immediately ask for the next piece of info
+                printf("How many seats do you want to book? ");
+                fflush(stdout);
+                sub_state = 3; // Move to the 'Number of Seats' state
+            } else {
+                printf("Invalid show. Select Show (1-3): ");
+                fflush(stdout);
+            }
+        }
+        else if (sub_state == 3) {
+            // Number of Seats state
+            seats_to_book = num;
+            if (seats_to_book > 0 && seats_to_book <= (ROWS * COLS)) {
+                printf("Enter customer name (no spaces): ");
+                fflush(stdout);
+                sub_state = 4; // Move to 'Name' state
+            } else {
+                printf("Invalid number. How many seats? ");
+                fflush(stdout);
+            }
+        }
+    }
+    // Note: sub_state 4 (Name) and 5 (Seat selection) 
+    // should follow the string input logic provided in the previous message.
+}
     else if (sub_state == 4) {
         if (scanf("%s", current_name) == 1) {
             clear_input_buffer();
