@@ -29,21 +29,23 @@
     <canvas id="canvas"></canvas>
 
     <script type='text/javascript'>
-        var inputQueue = []; // The "bridge" queue
+        // 1. This array acts as a waiting room for your characters
+        var inputQueue = [];
 
         function sendCommand() {
             var inputField = document.getElementById('userInput');
             if (!inputField.value) return;
             
-            // Add a newline so scanf() knows the input is finished
+            // CRITICAL: We add '\n' (Enter) so scanf() knows the number is finished
             var val = inputField.value + "\n"; 
             for (var i = 0; i < val.length; i++) {
-                inputQueue.push(val.charCodeAt(i));
+                inputQueue.push(val.charCodeAt(i)); // Convert letters to numbers C understands
             }
-            inputField.value = ""; 
+            
+            inputField.value = ""; // Clear the box for your next choice
         }
 
-        // Shortcut: Pressing Enter sends the command
+        // Convenience: Pressing 'Enter' on your keyboard now clicks 'Send' for you
         document.getElementById('userInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') sendCommand();
         });
@@ -53,16 +55,15 @@
                 var element = document.getElementById('output');
                 if (element) {
                     element.value += text + "\n";
-                    element.scrollTop = element.scrollHeight;
+                    element.scrollTop = element.scrollHeight; // Auto-scroll to latest output
                 }
             },
+            // CRITICAL: This is the function C calls to "read" your input
             stdin: function() {
-                // C calls this function whenever it runs scanf()
                 if (inputQueue.length > 0) {
-                    return inputQueue.shift();
+                    return inputQueue.shift(); // Pull the first character out of the waiting room
                 }
-                return -1;
-               // Signals "No Input" to C
+                return null; // Tell C the room is empty so it sleeps
             },
             canvas: document.getElementById('canvas')
         };
