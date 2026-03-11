@@ -92,10 +92,10 @@ void main_loop(){
     if(!fgets(input,sizeof(input),stdin))
         return;
 
-    trimnewline(input);
-    int num = atoi(input);
 
     if(sub_state == 0){
+        trimnewline(input);
+    int num = atoi(input);
 
         if(num == 1){
             printf("Enter Show Number (1-3): ");
@@ -133,6 +133,8 @@ void main_loop(){
     }
 
     else if(sub_state == 1){
+        trimnewline(input);
+    int num = atoi(input);
 
         int s = num - 1;
 
@@ -147,6 +149,8 @@ void main_loop(){
     }
 
     else if(sub_state == 2){
+        trimnewline(input);
+    int num = atoi(input);
 
         int s = num - 1;
 
@@ -173,6 +177,8 @@ void main_loop(){
     }
 
     else if(sub_state == 3){
+        trimnewline(input);
+    int num = atoi(input);
 
         seats_to_book = num;
 
