@@ -71,178 +71,51 @@ int parseSeat(char *input, int *r, int *c)
     return 0;
 }
 
-void main_loop()
-{
-    if(show_menu)
-    {
+void main_loop() {
+    // 1. Force the menu to print if the flag is set
+    if (show_menu) {
         printf("\n===== MOVIE TICKET SYSTEM =====\n");
-        printf("1. View Shows & Seats\n");
-        printf("2. Book Tickets\n");
-        printf("3. View Booking by ID\n");
-        printf("4. Occupancy Report\n");
-        printf("5. Exit\n");
-        printf("Enter choice: ");
+        printf("1. View Shows & Seats\n2. Book Tickets\n3. View Booking by ID\n4. Occupancy Report\n5. Exit\n");
+        printf("\nEnter choice: ");
         fflush(stdout);
-
         show_menu = 0;
         sub_state = 0;
+        return; // Exit this frame so the user can actually see the menu
     }
 
     char input[100];
-
-    if(!fgets(input,sizeof(input),stdin))
-        return;
-
+    // If no input is detected yet, just wait for the next frame
+    if (!fgets(input, sizeof(input), stdin)) return;
     trimnewline(input);
 
-    int num = atoi(input);
-
-    if(sub_state == 0)
-    {
-        if(num == 1)
-        {
-            printf("Enter Show Number (1-3): ");
-            fflush(stdout);
-            sub_state = 1;
-        }
-
-        else if(num == 2)
-        {
-            printf("Select Show (1-3): ");
-            fflush(stdout);
-            sub_state = 2;
-        }
-
-        else if(num == 3)
-        {
-            viewBooking();
-            show_menu = 1;
-        }
-
-        else if(num == 4)
-        {
-            showOccupancyReport();
-            show_menu = 1;
-        }
-
-        else if(num == 5)
-        {
-            saveToFile();
-            emscripten_cancel_main_loop();
-        }
-    }
-
-    else if(sub_state == 1)
-    {
-        int s = num - 1;
-
-        if(s>=0 && s<MAX_SHOWS)
-            displaySeats(s);
-        else
-            printf("Invalid show number\n");
-
+    // If the input is empty (just an Enter key) and we aren't in a text-entry state, 
+    // we use it as a signal to refresh the menu.
+    if (strlen(input) == 0 && sub_state == 6) {
         show_menu = 1;
+        return;
     }
 
-    else if(sub_state == 2)
-    {
-        int s = num - 1;
-
-        if(s>=0 && s<MAX_SHOWS)
-        {
-            selected_show = s;
-
+    if (sub_state == 0) {
+        int choice = atoi(input);
+        if (choice == 1) { printf("Enter Show Number (1-3): "); fflush(stdout); sub_state = 1; }
+        else if (choice == 2) { printf("Select Show (1-3): "); fflush(stdout); sub_state = 2; }
+        else if (choice == 3) { viewBooking(); show_menu = 1; }
+        else if (choice == 4) { showOccupancyReport(); show_menu = 1; }
+        else if (choice == 5) { saveToFile(); printf("Exiting..."); emscripten_cancel_main_loop(); }
+        else { show_menu = 1; } // Refresh menu on invalid choice
+    } 
+    else if (sub_state == 1) {
+        int s = atoi(input) - 1;
+        if (s >= 0 && s < MAX_SHOWS) {
             displaySeats(s);
-
-            printf("\nSelected Movie: %s\n",shows[s].title);
-            printf("How many seats do you want: ");
+            printf("\n[DONE] Press Enter to return to menu...");
             fflush(stdout);
-
-            sub_state = 3;
-        }
-        else
-        {
-            printf("Invalid show\n");
-            show_menu = 1;
-        }
+            sub_state = 6; 
+        } else { printf("Invalid. Enter Show (1-3): "); fflush(stdout); }
     }
-
-    else if (sub_state == 3)
-{
-    seats_to_book = num;
-
-    if(seats_to_book <=0 || seats_to_book > ROWS*COLS)
-    {
-        printf("Invalid number of seats.\n");
-        printf("How many seats do you want: ");
-        fflush(stdout);
-        return;
-    }
-
-    printf("Enter customer name: ");
-    fflush(stdout);
-
-    sub_state = 4;
-}
-
-    else if(sub_state == 4)
-{
-    strncpy(current_name, input, sizeof(current_name));
-    current_name[strcspn(current_name,"\n")] = 0;
-
-    if(strlen(current_name) == 0)
-    {
-        printf("Enter valid name: ");
-        fflush(stdout);
-        return;
-    }
-
-    seats_entered = 0;
-    current_seats_str[0] = '\0';
-
-    printf("Enter seat %d/%d (example A1): ", seats_entered+1, seats_to_book);
-    fflush(stdout);
-
-    sub_state = 5;
-}
-
-    else if(sub_state == 5)
-    {
-        int r,c;
-
-        if(parseSeat(input,&r,&c))
-        {
-            if(shows[selected_show].seats[r][c] == 0)
-            {
-                shows[selected_show].seats[r][c] = 1;
-
-                strncat(current_seats_str,input,5);
-                strcat(current_seats_str," ");
-
-                seats_entered++;
-
-                if(seats_entered < seats_to_book)
-                {
-                    printf("Enter seat %d/%d: ",seats_entered+1,seats_to_book);
-                    fflush(stdout);
-                }
-                else
-                {
-                    finalizeBooking();
-                    show_menu = 1;
-                }
-            }
-            else
-            {
-                printf("Seat already booked. Try again: ");
-                fflush(stdout);
-            }
-        }
-        else
-        {
-            printf("Invalid seat format. Try again: ");
-            fflush(stdout);
-        }
+    // ... keep your other states (2, 3, 4, 5) as they are ...
+    else if (sub_state == 6) {
+        show_menu = 1; 
     }
 }
 
