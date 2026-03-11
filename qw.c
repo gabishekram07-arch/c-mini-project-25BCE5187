@@ -21,7 +21,7 @@ typedef struct{
     char customerName[50];
     int showIndex;
     int numSeats;
-    char seatPositions[100];
+    char seatPositions[200];
     float totalAmount;
 }Booking;
 
@@ -35,7 +35,7 @@ static int seats_to_book = 0;
 static int seats_entered = 0;
 
 char current_name[50];
-char current_seats_str[100];
+char current_seats_str[200];
 
 void displaySeats(int showIdx);
 void viewBooking();
@@ -50,6 +50,7 @@ void trimnewline(char *str){
 }
 
 int parseSeat(char *input,int *r,int *c){
+
     if(strlen(input) < 2) return 0;
 
     char row = input[0];
@@ -74,6 +75,7 @@ void main_loop(){
     static char input[100];
 
     if(show_menu){
+
         printf("\n===== MOVIE TICKET SYSTEM =====\n");
         printf("1. View Shows & Seats\n");
         printf("2. Book Tickets\n");
@@ -111,12 +113,14 @@ void main_loop(){
 
         else if(num == 3){
             viewBooking();
+            sub_state = 0;
             show_menu = 1;
             return;
         }
 
         else if(num == 4){
             showOccupancyReport();
+            sub_state = 0;
             show_menu = 1;
             return;
         }
@@ -137,6 +141,7 @@ void main_loop(){
         else
             printf("Invalid show number\n");
 
+        sub_state = 0;
         show_menu = 1;
         return;
     }
@@ -172,6 +177,7 @@ void main_loop(){
         seats_to_book = num;
 
         if(seats_to_book <=0 || seats_to_book > ROWS*COLS){
+
             printf("Invalid number of seats\n");
             printf("How many seats do you want: ");
             fflush(stdout);
@@ -223,17 +229,20 @@ void main_loop(){
                 else{
 
                     finalizeBooking();
+                    sub_state = 0;
                     show_menu = 1;
                 }
             }
 
             else{
+
                 printf("Seat already booked. Try again: ");
                 fflush(stdout);
             }
         }
 
         else{
+
             printf("Invalid seat format. Try again: ");
             fflush(stdout);
         }
@@ -309,10 +318,17 @@ void displaySeats(int showIdx){
 
 void viewBooking(){
 
+    char input[50];
     int id;
 
     printf("Enter Booking ID: ");
-    scanf("%d",&id);
+    fflush(stdout);
+
+    if(!fgets(input,sizeof(input),stdin))
+        return;
+
+    trimnewline(input);
+    id = atoi(input);
 
     FILE *fp = fopen(BOOKINGS_FILE,"rb");
 
