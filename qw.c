@@ -10,20 +10,20 @@
 #define DATA_FILE "theater_data.bin"
 #define BOOKINGS_FILE "bookings.bin"
 
-typedef struct {
+typedef struct{
     char title[50];
     int seats[ROWS][COLS];
     float price;
-} Show;
+}Show;
 
-typedef struct {
+typedef struct{
     int bookingID;
     char customerName[50];
     int showIndex;
     int numSeats;
     char seatPositions[100];
     float totalAmount;
-} Booking;
+}Booking;
 
 Show shows[MAX_SHOWS];
 
@@ -42,16 +42,14 @@ void viewBooking();
 void showOccupancyReport();
 void saveToFile();
 void loadFromFile();
-int parseSeat(char *input, int *r, int *c);
+int parseSeat(char *input,int *r,int *c);
 void finalizeBooking();
 
-void trimnewline(char *str)
-{
+void trimnewline(char *str){
     str[strcspn(str,"\n")] = 0;
 }
 
-int parseSeat(char *input, int *r, int *c)
-{
+int parseSeat(char *input,int *r,int *c){
     if(strlen(input) < 2) return 0;
 
     char row = input[0];
@@ -71,10 +69,11 @@ int parseSeat(char *input, int *r, int *c)
     return 0;
 }
 
-void main_loop()
-{
-    if(show_menu)
-    {
+void main_loop(){
+
+    static char input[100];
+
+    if(show_menu){
         printf("\n===== MOVIE TICKET SYSTEM =====\n");
         printf("1. View Shows & Seats\n");
         printf("2. Book Tickets\n");
@@ -85,55 +84,52 @@ void main_loop()
         fflush(stdout);
 
         show_menu = 0;
-        sub_state = 0;
+        return;
     }
-
-    char input[100];
 
     if(!fgets(input,sizeof(input),stdin))
         return;
 
     trimnewline(input);
-
     int num = atoi(input);
 
-    if(sub_state == 0)
-    {
-        if(num == 1)
-        {
+    if(sub_state == 0){
+
+        if(num == 1){
             printf("Enter Show Number (1-3): ");
             fflush(stdout);
             sub_state = 1;
+            return;
         }
 
-        else if(num == 2)
-        {
+        else if(num == 2){
             printf("Select Show (1-3): ");
             fflush(stdout);
             sub_state = 2;
+            return;
         }
 
-        else if(num == 3)
-        {
+        else if(num == 3){
             viewBooking();
             show_menu = 1;
+            return;
         }
 
-        else if(num == 4)
-        {
+        else if(num == 4){
             showOccupancyReport();
             show_menu = 1;
+            return;
         }
 
-        else if(num == 5)
-        {
+        else if(num == 5){
             saveToFile();
             emscripten_cancel_main_loop();
+            return;
         }
     }
 
-    else if(sub_state == 1)
-    {
+    else if(sub_state == 1){
+
         int s = num - 1;
 
         if(s>=0 && s<MAX_SHOWS)
@@ -142,42 +138,43 @@ void main_loop()
             printf("Invalid show number\n");
 
         show_menu = 1;
-    }
-
-    else if (sub_state == 2) {
-
-    int s = num - 1;
-
-    if (s >= 0 && s < MAX_SHOWS) {
-
-        selected_show = s;
-
-        printf("\n");
-        displaySeats(s);
-
-        printf("\n>>> Show Selected: %s\n", shows[s].title);
-        printf("How many seats do you want to book: ");
-        fflush(stdout);
-
-        sub_state = 3;
-        return;   // ⭐ VERY IMPORTANT
-    }
-    else {
-
-        printf("Invalid show. Select (1-3): ");
-        fflush(stdout);
         return;
     }
-}
 
-    else if(sub_state == 3)
-    {
+    else if(sub_state == 2){
+
+        int s = num - 1;
+
+        if(s>=0 && s<MAX_SHOWS){
+
+            selected_show = s;
+
+            printf("\n=========== SCREEN ===========\n");
+            displaySeats(s);
+
+            printf("\nSelected Movie: %s\n",shows[s].title);
+            printf("How many seats do you want to book: ");
+            fflush(stdout);
+
+            sub_state = 3;
+            return;
+        }
+
+        else{
+            printf("Invalid show. Select (1-3): ");
+            fflush(stdout);
+            return;
+        }
+    }
+
+    else if(sub_state == 3){
+
         seats_to_book = num;
 
-        if(seats_to_book <=0)
-        {
-            printf("Invalid seat count\n");
-            show_menu = 1;
+        if(seats_to_book <=0 || seats_to_book > ROWS*COLS){
+            printf("Invalid number of seats\n");
+            printf("How many seats do you want: ");
+            fflush(stdout);
             return;
         }
 
@@ -185,10 +182,11 @@ void main_loop()
         fflush(stdout);
 
         sub_state = 4;
+        return;
     }
 
-    else if(sub_state == 4)
-    {
+    else if(sub_state == 4){
+
         strcpy(current_name,input);
 
         seats_entered = 0;
@@ -198,16 +196,17 @@ void main_loop()
         fflush(stdout);
 
         sub_state = 5;
+        return;
     }
 
-    else if(sub_state == 5)
-    {
+    else if(sub_state == 5){
+
         int r,c;
 
-        if(parseSeat(input,&r,&c))
-        {
-            if(shows[selected_show].seats[r][c] == 0)
-            {
+        if(parseSeat(input,&r,&c)){
+
+            if(shows[selected_show].seats[r][c] == 0){
+
                 shows[selected_show].seats[r][c] = 1;
 
                 strcat(current_seats_str,input);
@@ -215,35 +214,37 @@ void main_loop()
 
                 seats_entered++;
 
-                if(seats_entered < seats_to_book)
-                {
+                if(seats_entered < seats_to_book){
+
                     printf("Enter seat %d/%d: ",seats_entered+1,seats_to_book);
                     fflush(stdout);
                 }
-                else
-                {
+
+                else{
+
                     finalizeBooking();
                     show_menu = 1;
                 }
             }
-            else
-            {
+
+            else{
                 printf("Seat already booked. Try again: ");
                 fflush(stdout);
             }
         }
-        else
-        {
+
+        else{
             printf("Invalid seat format. Try again: ");
             fflush(stdout);
         }
+
+        return;
     }
 }
 
-int main()
-{
-    srand(time(NULL));
+int main(){
 
+    srand(time(NULL));
     loadFromFile();
 
     printf("System Ready\n");
@@ -253,26 +254,22 @@ int main()
     return 0;
 }
 
-void finalizeBooking()
-{
+void finalizeBooking(){
+
     Booking b;
 
     b.bookingID = rand()%9000 + 1000;
 
     strcpy(b.customerName,current_name);
-
     b.showIndex = selected_show;
-
     b.numSeats = seats_to_book;
-
     strcpy(b.seatPositions,current_seats_str);
 
     b.totalAmount = seats_to_book * shows[selected_show].price;
 
     FILE *fp = fopen(BOOKINGS_FILE,"ab");
 
-    if(fp)
-    {
+    if(fp){
         fwrite(&b,sizeof(Booking),1,fp);
         fclose(fp);
     }
@@ -284,8 +281,8 @@ void finalizeBooking()
     printf("Total Amount: $%.2f\n",b.totalAmount);
 }
 
-void displaySeats(int showIdx)
-{
+void displaySeats(int showIdx){
+
     printf("\n--- %s ---\n",shows[showIdx].title);
 
     printf("    ");
@@ -294,12 +291,12 @@ void displaySeats(int showIdx)
 
     printf("\n");
 
-    for(int r=0;r<ROWS;r++)
-    {
+    for(int r=0;r<ROWS;r++){
+
         printf("%c | ",'A'+r);
 
-        for(int c=0;c<COLS;c++)
-        {
+        for(int c=0;c<COLS;c++){
+
             if(shows[showIdx].seats[r][c])
                 printf("X  ");
             else
@@ -310,18 +307,16 @@ void displaySeats(int showIdx)
     }
 }
 
-void viewBooking()
-{
-    printf("Enter Booking ID: ");
-    fflush(stdout);
+void viewBooking(){
 
     int id;
+
+    printf("Enter Booking ID: ");
     scanf("%d",&id);
 
     FILE *fp = fopen(BOOKINGS_FILE,"rb");
 
-    if(!fp)
-    {
+    if(!fp){
         printf("No bookings found\n");
         return;
     }
@@ -329,10 +324,10 @@ void viewBooking()
     Booking b;
     int found = 0;
 
-    while(fread(&b,sizeof(Booking),1,fp))
-    {
-        if(b.bookingID == id)
-        {
+    while(fread(&b,sizeof(Booking),1,fp)){
+
+        if(b.bookingID == id){
+
             printf("\nBooking ID: %d\n",b.bookingID);
             printf("Customer: %s\n",b.customerName);
             printf("Movie: %s\n",shows[b.showIndex].title);
@@ -350,12 +345,12 @@ void viewBooking()
         printf("Booking not found\n");
 }
 
-void showOccupancyReport()
-{
+void showOccupancyReport(){
+
     printf("\n=== OCCUPANCY REPORT ===\n");
 
-    for(int i=0;i<MAX_SHOWS;i++)
-    {
+    for(int i=0;i<MAX_SHOWS;i++){
+
         int booked = 0;
 
         for(int r=0;r<ROWS;r++)
@@ -368,28 +363,27 @@ void showOccupancyReport()
     }
 }
 
-void saveToFile()
-{
+void saveToFile(){
+
     FILE *fp = fopen(DATA_FILE,"wb");
 
-    if(fp)
-    {
+    if(fp){
         fwrite(shows,sizeof(Show),MAX_SHOWS,fp);
         fclose(fp);
     }
 }
 
-void loadFromFile()
-{
+void loadFromFile(){
+
     FILE *fp = fopen(DATA_FILE,"rb");
 
-    if(fp)
-    {
+    if(fp){
         fread(shows,sizeof(Show),MAX_SHOWS,fp);
         fclose(fp);
     }
-    else
-    {
+
+    else{
+
         strcpy(shows[0].title,"Dune Part Two");
         shows[0].price = 12;
 
