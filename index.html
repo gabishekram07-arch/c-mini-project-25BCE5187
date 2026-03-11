@@ -1,18 +1,21 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Movie Ticket System</title>
+    <title>🎬 Movie Ticket System</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #1a1a1a; color: #eee; margin: 0; padding: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #1a1a1a; color: #eee; margin: 0; padding: 20px; }
         #output { 
-            width: 90%; height: 400px; background: #000; color: #33ff33; 
-            font-family: 'Courier New', monospace; padding: 10px; border: 2px solid #444;
-            margin-top: 15px; resize: none;
+            width: 90%; max-width: 800px; height: 450px; background: #000; color: #33ff33; 
+            font-family: 'Consolas', 'Courier New', monospace; padding: 15px; border: 2px solid #444;
+            margin-top: 20px; border-radius: 8px; overflow-y: auto; white-space: pre-wrap;
+            text-align: left; margin-left: auto; margin-right: auto;
         }
-        .input-area { background: #333; padding: 15px; border-radius: 8px; display: inline-block; }
-        input { padding: 10px; width: 250px; border: none; border-radius: 4px; }
-        button { padding: 10px 20px; background: #eb3b5a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .input-area { background: #333; padding: 20px; border-radius: 8px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        input { padding: 12px; width: 250px; border: 1px solid #555; border-radius: 4px; background: #222; color: white; outline: none; }
+        input:focus { border-color: #eb3b5a; }
+        button { padding: 12px 25px; background: #eb3b5a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #ff4d6d; }
         canvas { display: none; }
     </style>
 </head>
@@ -20,52 +23,55 @@
     <h1>🎬 Movie Ticket System</h1>
     
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Type choice and press Enter...">
+        <input type="text" id="userInput" placeholder="Type choice and press Enter..." autofocus>
         <button onclick="sendCommand()">Send</button>
     </div>
 
-    <br>
-    <textarea id="output" readonly></textarea>
+    <div id="output">Initializing system...&#10;</div>
     <canvas id="canvas"></canvas>
 
     <script type='text/javascript'>
-        // 1. This array acts as a waiting room for your characters
         var inputQueue = [];
+        var outputElement = document.getElementById('output');
 
         function sendCommand() {
             var inputField = document.getElementById('userInput');
-            if (!inputField.value) return;
+            var val = inputField.value;
+            if (val === "") return;
             
-            // CRITICAL: We add '\n' (Enter) so scanf() knows the number is finished
-            var val = inputField.value + "\n"; 
+            // Append newline so C's fgets/scanf knows the line ended
+            val += "\n"; 
             for (var i = 0; i < val.length; i++) {
-                inputQueue.push(val.charCodeAt(i)); // Convert letters to numbers C understands
+                inputQueue.push(val.charCodeAt(i));
             }
             
-            inputField.value = ""; // Clear the box for your next choice
+            // Mirror the user input to the "terminal"
+            outputElement.innerText += "> " + inputField.value + "\n";
+            inputField.value = "";
+            outputElement.scrollTop = outputElement.scrollHeight;
         }
 
-        // Convenience: Pressing 'Enter' on your keyboard now clicks 'Send' for you
         document.getElementById('userInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') sendCommand();
         });
 
         var Module = {
-            print: function(text) {
-                var element = document.getElementById('output');
-                if (element) {
-                    element.value += text + "\n";
-                    element.scrollTop = element.scrollHeight; // Auto-scroll to latest output
-                }
-            },
-            // CRITICAL: This is the function C calls to "read" your input
+            preRun: [],
+            postRun: [],
+            print: (function() {
+                return function(text) {
+                    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                    outputElement.innerText += text + "\n";
+                    outputElement.scrollTop = outputElement.scrollHeight;
+                };
+            })(),
+            canvas: document.getElementById('canvas'),
             stdin: function() {
                 if (inputQueue.length > 0) {
-                    return inputQueue.shift(); // Pull the first character out of the waiting room
+                    return inputQueue.shift();
                 }
-                return undefined; // Tell C the room is empty so it sleeps
-            },
-            canvas: document.getElementById('canvas')
+                return null;
+            }
         };
     </script>
     <script async src="index.js"></script>
