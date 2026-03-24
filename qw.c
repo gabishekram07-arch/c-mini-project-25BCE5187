@@ -80,7 +80,6 @@ void main_loop(){
         printf("3. View Booking by ID\n");
         printf("4. Occupancy Report\n");
         printf("5. Exit\n");
-        printf("\nEnter choice: ");
         show_menu = 0;
         return;
     }
@@ -228,7 +227,7 @@ void main_loop(){
 
 int main(){
 
-    setvbuf(stdout, NULL, _IONBF, 0);  // 🔥 IMPORTANT FIX
+    setvbuf(stdout, NULL, _IONBF, 0);
 
     srand(time(NULL));
     loadFromFile();
