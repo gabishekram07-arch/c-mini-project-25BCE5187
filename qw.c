@@ -80,6 +80,7 @@ void main_loop(){
         printf("3. View Booking by ID\n");
         printf("4. Occupancy Report\n");
         printf("5. Exit\n");
+        fflush(stdout);
         show_menu = 0;
         return;
     }
@@ -94,18 +95,21 @@ void main_loop(){
 
         if(num == 1){
             printf("\nEnter Show Number (1-3): ");
+            fflush(stdout);
             sub_state = 1;
             return;
         }
 
         else if(num == 2){
             printf("\nSelect Show (1-3): ");
+            fflush(stdout);
             sub_state = 2;
             return;
         }
 
         else if(num == 3){
             printf("\nEnter Booking ID: ");
+            fflush(stdout);
             sub_state = 6;
             return;
         }
@@ -148,11 +152,13 @@ void main_loop(){
 
             printf("\nSelected Movie: %s\n",shows[s].title);
             printf("\nHow many seats: ");
+            fflush(stdout);
 
             sub_state = 3;
         }
         else{
             printf("\nInvalid show. Select (1-3): ");
+            fflush(stdout);
         }
         return;
     }
@@ -162,10 +168,12 @@ void main_loop(){
 
         if(seats_to_book <=0){
             printf("\nInvalid number. Try again: ");
+            fflush(stdout);
             return;
         }
 
         printf("\nEnter customer name: ");
+        fflush(stdout);
         sub_state = 4;
         return;
     }
@@ -177,6 +185,7 @@ void main_loop(){
         current_seats_str[0] = '\0';
 
         printf("\nEnter seat %d/%d (A1): ",1,seats_to_book);
+        fflush(stdout);
 
         sub_state = 5;
         return;
@@ -198,6 +207,7 @@ void main_loop(){
                 if(seats_entered < seats_to_book){
                     printf("\nEnter seat %d/%d: ",
                     seats_entered+1,seats_to_book);
+                    fflush(stdout);
                 }
                 else{
                     finalizeBooking();
@@ -207,10 +217,12 @@ void main_loop(){
             }
             else{
                 printf("\nSeat already booked. Try again: ");
+                fflush(stdout);
             }
         }
         else{
             printf("\nInvalid seat. Try again: ");
+            fflush(stdout);
         }
         return;
     }
@@ -233,6 +245,7 @@ int main(){
     loadFromFile();
 
     printf("System Ready\n");
+    fflush(stdout);
 
     emscripten_set_main_loop(main_loop,0,1);
     return 0;
