@@ -29,7 +29,6 @@ Show shows[MAX_SHOWS];
 
 static int show_menu = 1;
 static int sub_state = 0;
-
 static int selected_show = -1;
 static int seats_to_book = 0;
 static int seats_entered = 0;
@@ -37,6 +36,7 @@ static int seats_entered = 0;
 char current_name[50];
 char current_seats_str[200];
 
+// Function Prototypes
 void displaySeats(int showIdx);
 void showOccupancyReport();
 void saveToFile();
@@ -63,93 +63,94 @@ int parseSeat(char *input, int *r, int *c) {
 void main_loop() {
     static char input[100];
 
-    // INITIAL MENU PRINTING
+    // 1. Initial Menu display (First run only or after reset)
     if (show_menu) {
         printf("\n===== MOVIE TICKET SYSTEM =====\n");
-        printf("1. View Shows & Seats\n");
-        printf("2. Book Tickets\n");
-        printf("3. View Booking by ID\n");
-        printf("4. Occupancy Report\n");
-        printf("5. Exit\n");
-        printf("Enter choice: "); // Prompt appears before input
-        fflush(stdout);
+        printf("1. View Shows & Seats\n2. Book Tickets\n3. View Booking by ID\n4. Occupancy Report\n5. Exit\n");
+        printf("> "); // Direct prompt instead of "Enter Choice"
+        fflush(stdout); 
         show_menu = 0;
         return;
     }
 
-    // Wait for input from the HTML text box
+    // 2. Non-blocking check for input
     if (!fgets(input, sizeof(input), stdin))
         return;
 
     trimnewline(input);
+    printf("> %s\n", input); // Echo user input for visual clarity
 
-    if (sub_state == 0) {
+    // 3. State Machine Logic
+    if (sub_state == 0) { // MAIN MENU SELECTION
         int num = atoi(input);
         if (num == 1) {
-            printf("\nEnter Show Number (1-3) to view: ");
+            printf("Enter Show Number (1-3) to view: ");
             fflush(stdout);
             sub_state = 1;
         } else if (num == 2) {
-            printf("\nSelect Show (1-3) to book: ");
+            printf("Select Show (1-3) to book: ");
             fflush(stdout);
             sub_state = 2;
         } else if (num == 3) {
-            printf("\nEnter Booking ID to search: ");
+            printf("Enter Booking ID: ");
             fflush(stdout);
             sub_state = 6;
         } else if (num == 4) {
             showOccupancyReport();
-            show_menu = 1; // Resets to main menu
+            show_menu = 1; // Return to menu and print it
         } else if (num == 5) {
-            printf("\nExiting...\n");
+            printf("Exiting and Saving...\n");
             saveToFile();
             emscripten_cancel_main_loop();
         } else {
-            printf("\nInvalid choice. Enter choice: ");
+            printf("Invalid. Select (1-5): ");
             fflush(stdout);
         }
     } 
-    else if (sub_state == 1) {
+    else if (sub_state == 1) { // VIEW SHOWS LOGIC
         int s = atoi(input) - 1;
-        if (s >= 0 && s < MAX_SHOWS) displaySeats(s);
-        else printf("\nInvalid show number.");
-        show_menu = 1;
-        sub_state = 0;
+        if (s >= 0 && s < MAX_SHOWS) {
+            displaySeats(s);
+            show_menu = 1;
+            sub_state = 0;
+        } else {
+            printf("Invalid. Enter Show Number (1-3): ");
+            fflush(stdout);
+        }
     } 
-    else if (sub_state == 2) {
+    else if (sub_state == 2) { // BOOKING: SELECT SHOW
         int s = atoi(input) - 1;
         if (s >= 0 && s < MAX_SHOWS) {
             selected_show = s;
             displaySeats(s);
-            printf("\nSelected Movie: %s", shows[s].title);
-            printf("\nHow many seats: ");
+            printf("\nSelected: %s\nHow many seats: ", shows[s].title); // Prompt ahead
             fflush(stdout);
             sub_state = 3;
         } else {
-            printf("\nInvalid show. Select (1-3): ");
+            printf("Invalid. Select Show (1-3): ");
             fflush(stdout);
         }
     } 
-    else if (sub_state == 3) {
+    else if (sub_state == 3) { // BOOKING: SEAT COUNT
         seats_to_book = atoi(input);
         if (seats_to_book <= 0) {
-            printf("\nInvalid number. How many seats: ");
+            printf("Invalid number. How many seats: ");
             fflush(stdout);
         } else {
-            printf("\nEnter customer name: ");
+            printf("Enter customer name: "); // Prompt ahead
             fflush(stdout);
             sub_state = 4;
         }
     } 
-    else if (sub_state == 4) {
+    else if (sub_state == 4) { // BOOKING: NAME
         strcpy(current_name, input);
         seats_entered = 0;
         current_seats_str[0] = '\0';
-        printf("\nEnter seat 1/%d (e.g., A1): ", seats_to_book);
+        printf("Enter seat 1/%d (e.g., A1): ", seats_to_book); // Prompt ahead
         fflush(stdout);
         sub_state = 5;
     } 
-    else if (sub_state == 5) {
+    else if (sub_state == 5) { // BOOKING: SEAT SELECTION
         int r, c;
         if (parseSeat(input, &r, &c)) {
             if (shows[selected_show].seats[r][c] == 0) {
@@ -159,58 +160,38 @@ void main_loop() {
                 seats_entered++;
 
                 if (seats_entered < seats_to_book) {
-                    printf("\nEnter seat %d/%d: ", seats_entered + 1, seats_to_book);
+                    printf("Enter seat %d/%d: ", seats_entered + 1, seats_to_book);
                     fflush(stdout);
                 } else {
                     finalizeBooking();
                     sub_state = 0;
-                    show_menu = 1;
+                    show_menu = 1; // Back to main menu
                 }
             } else {
-                printf("\nSeat already booked. Try again: ");
+                printf("Seat %s already taken. Enter seat %d/%d: ", input, seats_entered + 1, seats_to_book);
                 fflush(stdout);
             }
         } else {
-            printf("\nInvalid seat format (A1-E10). Try again: ");
+            printf("Format error. Enter seat (A1-E10): ");
             fflush(stdout);
         }
     } 
-    else if (sub_state == 6) {
-        int id = atoi(input);
-        searchBookingByID(id);
+    else if (sub_state == 6) { // SEARCH ID
+        searchBookingByID(atoi(input));
         sub_state = 0;
         show_menu = 1;
     }
 }
 
 int main() {
-    setvbuf(stdout, NULL, _IONBF, 0); // Disable buffering for immediate output
+    setvbuf(stdout, NULL, _IONBF, 0); // No buffering for instant UI updates
     srand(time(NULL));
     loadFromFile();
-    printf("System Ready\n");
-    fflush(stdout);
     emscripten_set_main_loop(main_loop, 0, 1);
     return 0;
 }
 
-// ... Rest of your functions (searchBookingByID, finalizeBooking, etc.) remain the same ...
-
-void searchBookingByID(int id) {
-    FILE *fp = fopen(BOOKINGS_FILE, "rb");
-    if (!fp) { printf("\nNo bookings found\n"); return; }
-    Booking b;
-    int found = 0;
-    while (fread(&b, sizeof(Booking), 1, fp)) {
-        if (b.bookingID == id) {
-            printf("\nBooking ID: %d\nCustomer: %s\nMovie: %s\nSeats: %s\nTotal: $%.2f\n",
-                   b.bookingID, b.customerName, shows[b.showIndex].title, b.seatPositions, b.totalAmount);
-            found = 1;
-            break;
-        }
-    }
-    fclose(fp);
-    if (!found) printf("\nBooking not found\n");
-}
+// ... helper functions (displaySeats, finalizeBooking, etc.) remain as in your original logic ...
 
 void finalizeBooking() {
     Booking b;
@@ -223,7 +204,7 @@ void finalizeBooking() {
     FILE *fp = fopen(BOOKINGS_FILE, "ab");
     if (fp) { fwrite(&b, sizeof(Booking), 1, fp); fclose(fp); }
     saveToFile();
-    printf("\nBooking Successful!\nBooking ID: %d\nTotal Amount: $%.2f\n", b.bookingID, b.totalAmount);
+    printf("\nBooking Successful! ID: %d | Total: $%.2f\n", b.bookingID, b.totalAmount);
 }
 
 void displaySeats(int showIdx) {
@@ -247,7 +228,7 @@ void showOccupancyReport() {
         for (int r = 0; r < ROWS; r++)
             for (int c = 0; c < COLS; c++)
                 if (shows[i].seats[r][c]) booked++;
-        printf("%s : %d/%d seats booked\n", shows[i].title, booked, ROWS * COLS);
+        printf("%s : %d/%d seats\n", shows[i].title, booked, ROWS * COLS);
     }
 }
 
@@ -267,4 +248,21 @@ void loadFromFile() {
             for (int r = 0; r < ROWS; r++)
                 for (int c = 0; c < COLS; c++) shows[i].seats[r][c] = 0;
     }
+}
+
+void searchBookingByID(int id) {
+    FILE *fp = fopen(BOOKINGS_FILE, "rb");
+    if (!fp) { printf("\nNo bookings found\n"); return; }
+    Booking b;
+    int found = 0;
+    while (fread(&b, sizeof(Booking), 1, fp)) {
+        if (b.bookingID == id) {
+            printf("\nID: %d | Name: %s | Movie: %s | Seats: %s | Total: $%.2f\n",
+                   b.bookingID, b.customerName, shows[b.showIndex].title, b.seatPositions, b.totalAmount);
+            found = 1;
+            break;
+        }
+    }
+    fclose(fp);
+    if (!found) printf("\nBooking not found\n");
 }
